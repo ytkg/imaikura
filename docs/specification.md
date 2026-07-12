@@ -10,6 +10,7 @@
 
 - Vite + React + TypeScript
 - GitHub Pagesで公開する
+- 正規URLは `https://ytkg.github.io/imaikura/` とする
 - `imaikura` を独立した公開Gitリポジトリとして管理する
 - MITライセンスを適用する
 - 初回リリースではPWA、履歴、共有、予算設定、多言語、ダークモードを対象外とする
@@ -53,6 +54,7 @@
 
 - 白と墨色を基調とし、主要操作を緑で強調する
 - 本とバーコードを組み合わせたアイコンを使用する
+- SVGファビコン、Apple Touch Icon、OGP画像を同じ意匠で提供する
 - 空の状態では大きなスキャンボタンを表示する
 - 片手操作、文字拡大、十分なコントラストに配慮する
 
@@ -82,3 +84,5 @@
 - GitHub Actionsでテスト、型チェック、ビルドに成功した成果物だけをPagesへ公開する
 - 自動テストではISBN、税計算、OpenBD変換、端末内保存、書籍状態管理、主要なカード操作を検証する
 - カメラ映像の認識精度、ライト、端末振動は実機受け入れ確認で検証する
+- 実機確認結果は `docs/device-test-checklist.md` に記録する
+- OGP、canonical URL、Twitter Card、robots.txtを公開用メタデータとして提供する

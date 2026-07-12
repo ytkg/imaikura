@@ -18,6 +18,7 @@ npm run build
 ```
 
 仕様は [`docs/specification.md`](docs/specification.md) で管理します。
+実機確認は [`docs/device-test-checklist.md`](docs/device-test-checklist.md) に記録します。
 
 ## License
 
