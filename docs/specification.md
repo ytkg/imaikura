@@ -86,3 +86,5 @@
 - カメラ映像の認識精度、ライト、端末振動は実機受け入れ確認で検証する
 - 実機確認結果は `docs/device-test-checklist.md` に記録する
 - OGP、canonical URL、Twitter Card、robots.txtを公開用メタデータとして提供する
+- `App`は画面構成、各コンポーネントは表示責務、Hookは状態と副作用に責務を分ける
+- PrettierでTypeScript、CSS、Markdown、YAMLの書式を統一し、CIで検証する

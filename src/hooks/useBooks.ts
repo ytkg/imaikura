@@ -1,109 +1,163 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { fetchOpenBdBook } from '../lib/openbd'
-import { loadBooks, saveBooks } from '../lib/storage'
-import type { Book, DeletedBook } from '../types'
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { fetchOpenBdBook } from "../lib/openbd";
+import { loadBooks, saveBooks } from "../lib/storage";
+import type { Book, DeletedBook } from "../types";
 
-function pendingBook(isbn: string): Book {
+type BooksUpdater = (currentBooks: Book[]) => Book[];
+
+function createPendingBook(isbn: string): Book {
   return {
     isbn,
-    title: '',
+    title: "",
     authors: [],
     coverUrl: null,
     openBdPrice: null,
     price: null,
     priceEdited: false,
     included: true,
-    status: 'loading',
+    status: "loading",
     addedAt: Date.now(),
-  }
+  };
+}
+
+function updateBookByIsbn(
+  books: Book[],
+  isbn: string,
+  update: Partial<Book>,
+): Book[] {
+  return books.map((book) =>
+    book.isbn === isbn ? { ...book, ...update } : book,
+  );
+}
+
+function applyLookupResult(
+  book: Book,
+  result: Awaited<ReturnType<typeof fetchOpenBdBook>>,
+): Book {
+  if (!result) return { ...book, status: "not-found" };
+
+  return {
+    ...book,
+    title: result.title,
+    authors: result.authors,
+    coverUrl: result.coverUrl,
+    openBdPrice: result.price,
+    price: book.priceEdited ? book.price : result.price,
+    status: "ready",
+  };
 }
 
 export function useBooks() {
-  const [books, setBooks] = useState<Book[]>(loadBooks)
-  const booksRef = useRef(books)
-  const [deleted, setDeleted] = useState<DeletedBook | null>(null)
+  const [books, setBooks] = useState<Book[]>(loadBooks);
+  const booksRef = useRef(books);
+  const [deleted, setDeleted] = useState<DeletedBook | null>(null);
 
   useEffect(() => {
-    booksRef.current = books
-    saveBooks(books)
-  }, [books])
+    saveBooks(books);
+  }, [books]);
 
-  const fetchMetadata = useCallback(async (isbn: string) => {
-    setBooks((current) => current.map((book) => book.isbn === isbn ? { ...book, status: 'loading' } : book))
-    try {
-      const result = await fetchOpenBdBook(isbn)
-      setBooks((current) => current.map((book) => {
-        if (book.isbn !== isbn) return book
-        if (!result) return { ...book, status: 'not-found' }
-        return {
-          ...book,
-          title: result.title,
-          authors: result.authors,
-          coverUrl: result.coverUrl,
-          openBdPrice: result.price,
-          price: book.priceEdited ? book.price : result.price,
-          status: 'ready',
-        }
-      }))
-    } catch {
-      setBooks((current) => current.map((book) => book.isbn === isbn ? { ...book, status: 'error' } : book))
-    }
-  }, [])
+  const commitBooks = useCallback((updater: BooksUpdater) => {
+    const nextBooks = updater(booksRef.current);
+    booksRef.current = nextBooks;
+    setBooks(nextBooks);
+  }, []);
 
-  const addBook = useCallback((isbn: string): boolean => {
-    if (booksRef.current.some((book) => book.isbn === isbn)) return false
-    const next = [pendingBook(isbn), ...booksRef.current]
-    booksRef.current = next
-    setBooks(next)
-    void fetchMetadata(isbn)
-    return true
-  }, [fetchMetadata])
+  const fetchMetadata = useCallback(
+    async (isbn: string) => {
+      commitBooks((currentBooks) =>
+        updateBookByIsbn(currentBooks, isbn, { status: "loading" }),
+      );
+
+      try {
+        const result = await fetchOpenBdBook(isbn);
+        commitBooks((currentBooks) =>
+          currentBooks.map((book) =>
+            book.isbn === isbn ? applyLookupResult(book, result) : book,
+          ),
+        );
+      } catch {
+        commitBooks((currentBooks) =>
+          updateBookByIsbn(currentBooks, isbn, { status: "error" }),
+        );
+      }
+    },
+    [commitBooks],
+  );
+
+  const addBook = useCallback(
+    (isbn: string): boolean => {
+      if (booksRef.current.some((book) => book.isbn === isbn)) return false;
+      commitBooks((currentBooks) => [createPendingBook(isbn), ...currentBooks]);
+      void fetchMetadata(isbn);
+      return true;
+    },
+    [commitBooks, fetchMetadata],
+  );
 
   useEffect(() => {
-    const retry = () => {
-      books.filter((book) => book.status === 'error').forEach((book) => void fetchMetadata(book.isbn))
-    }
-    window.addEventListener('online', retry)
-    return () => window.removeEventListener('online', retry)
-  }, [books, fetchMetadata])
+    const retryFailedLookups = () => {
+      booksRef.current
+        .filter((book) => book.status === "error")
+        .forEach((book) => void fetchMetadata(book.isbn));
+    };
+    window.addEventListener("online", retryFailedLookups);
+    return () => window.removeEventListener("online", retryFailedLookups);
+  }, [fetchMetadata]);
 
-  const updateBook = useCallback((isbn: string, update: Partial<Book>) => {
-    setBooks((current) => current.map((book) => book.isbn === isbn ? { ...book, ...update } : book))
-  }, [])
+  const updateBook = useCallback(
+    (isbn: string, update: Partial<Book>) => {
+      commitBooks((currentBooks) =>
+        updateBookByIsbn(currentBooks, isbn, update),
+      );
+    },
+    [commitBooks],
+  );
 
-  const removeBook = useCallback((isbn: string) => {
-    setBooks((current) => {
-      const index = current.findIndex((book) => book.isbn === isbn)
-      if (index < 0) return current
-      setDeleted({ book: current[index], index })
-      return current.filter((book) => book.isbn !== isbn)
-    })
-  }, [])
+  const removeBook = useCallback(
+    (isbn: string) => {
+      commitBooks((currentBooks) => {
+        const index = currentBooks.findIndex((book) => book.isbn === isbn);
+        if (index < 0) return currentBooks;
+        setDeleted({ book: currentBooks[index], index });
+        return currentBooks.filter((book) => book.isbn !== isbn);
+      });
+    },
+    [commitBooks],
+  );
 
   const undoRemove = useCallback(() => {
-    if (!deleted) return
-    setBooks((current) => {
-      const next = [...current]
-      next.splice(Math.min(deleted.index, next.length), 0, deleted.book)
-      return next
-    })
-    setDeleted(null)
-  }, [deleted])
+    if (!deleted) return;
+    commitBooks((currentBooks) => {
+      const restoredBooks = [...currentBooks];
+      const restoreIndex = Math.min(deleted.index, restoredBooks.length);
+      restoredBooks.splice(restoreIndex, 0, deleted.book);
+      return restoredBooks;
+    });
+    setDeleted(null);
+  }, [commitBooks, deleted]);
 
-  const includedBooks = useMemo(() => books.filter((book) => book.included), [books])
-  const heldBooks = useMemo(() => books.filter((book) => !book.included), [books])
+  const plannedBooks = useMemo(
+    () => books.filter((book) => book.included),
+    [books],
+  );
+  const heldBooks = useMemo(
+    () => books.filter((book) => !book.included),
+    [books],
+  );
+  const clearDeleted = useCallback(() => setDeleted(null), []);
+  const clearBooks = useCallback(() => commitBooks(() => []), [commitBooks]);
 
   return {
     books,
-    includedBooks,
+    plannedBooks,
     heldBooks,
     deleted,
     addBook,
     updateBook,
     removeBook,
     undoRemove,
-    clearDeleted: () => setDeleted(null),
-    clearBooks: () => setBooks([]),
+    clearDeleted,
+    clearBooks,
     retryBook: fetchMetadata,
-  }
+  };
 }
