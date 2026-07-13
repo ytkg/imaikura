@@ -259,7 +259,7 @@ a:focus-visible {
   grid-template-columns: 64px minmax(0, 1fr) 92px;
   gap: 10px;
   align-items: start;
-  padding: 14px 0;
+  padding: 14px 10px 14px 12px;
   background: var(--surface);
   border-top: 1px solid var(--line);
 }
