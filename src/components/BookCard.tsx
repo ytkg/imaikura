@@ -1,12 +1,5 @@
 import { useState } from "react";
-import {
-  BookOpen,
-  Check,
-  CircleAlert,
-  Pencil,
-  RefreshCw,
-  Trash2,
-} from "lucide-react";
+import { BookOpen, CircleAlert, RefreshCw } from "lucide-react";
 import { formatYen } from "../lib/money";
 import type { Book } from "../types";
 import { BookEditorDialog } from "./BookEditorDialog";
@@ -20,22 +13,10 @@ interface BookCardProps {
 
 export function BookCard({ book, onUpdate, onRemove, onRetry }: BookCardProps) {
   const [editing, setEditing] = useState(false);
+  const toggleLabel = book.included ? "保留にする" : "購入予定に戻す";
 
   return (
     <article className={`book-card ${book.included ? "" : "book-card--held"}`}>
-      <button
-        className={`include-control ${book.included ? "include-control--active" : ""}`}
-        type="button"
-        aria-label={
-          book.included
-            ? `${book.title || book.isbn}を保留にする`
-            : `${book.title || book.isbn}を合計に含める`
-        }
-        onClick={() => onUpdate({ included: !book.included })}
-      >
-        {book.included ? <Check size={17} strokeWidth={3} /> : null}
-      </button>
-
       <div className="book-cover" aria-hidden="true">
         {book.coverUrl ? (
           <img src={book.coverUrl} alt="" />
@@ -88,22 +69,28 @@ export function BookCard({ book, onUpdate, onRemove, onRetry }: BookCardProps) {
 
       <div className="book-actions">
         <button
-          className="icon-button"
+          className={`action-button include-control ${book.included ? "" : "include-control--held"}`}
           type="button"
-          aria-label="書籍情報と価格を編集"
-          title="編集"
-          onClick={() => setEditing(true)}
+          aria-label={`${book.title || book.isbn}を${toggleLabel}`}
+          onClick={() => onUpdate({ included: !book.included })}
         >
-          <Pencil size={18} />
+          {toggleLabel}
         </button>
         <button
-          className="icon-button icon-button--danger"
+          className="action-button"
+          type="button"
+          aria-label="書籍情報と価格を編集"
+          onClick={() => setEditing(true)}
+        >
+          編集
+        </button>
+        <button
+          className="action-button action-button--danger"
           type="button"
           aria-label="この本を削除"
-          title="削除"
           onClick={onRemove}
         >
-          <Trash2 size={18} />
+          削除
         </button>
       </div>
 

@@ -33,6 +33,22 @@ describe("BookCard", () => {
     expect(onUpdate).toHaveBeenCalledWith({ included: false });
   });
 
+  it("requests returning a held book to planned", () => {
+    const onUpdate = vi.fn();
+    render(
+      <BookCard
+        book={{ ...baseBook, included: false }}
+        onUpdate={onUpdate}
+        onRemove={vi.fn()}
+        onRetry={vi.fn()}
+      />,
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "テストの本を購入予定に戻す" }),
+    );
+    expect(onUpdate).toHaveBeenCalledWith({ included: true });
+  });
+
   it("edits title and price and marks the price as changed", () => {
     const onUpdate = vi.fn();
     render(
