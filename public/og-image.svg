@@ -8,7 +8,7 @@
     <path d="M115 72v108M65 135v27m18-23v27m18-25v28m28-28v28m18-30v27m18-31v27" stroke="#18794e" stroke-width="7"/>
   </g>
   <g fill="#1f2420" font-family="-apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif">
-    <text x="445" y="270" font-size="82" font-weight="700">いまいくら</text>
+    <text x="445" y="270" font-size="82" font-weight="700">いまいくら？</text>
     <text x="450" y="340" font-size="32" font-weight="500" fill="#4f5851">選んだ本の合計金額がすぐわかる</text>
   </g>
   <rect x="450" y="395" width="210" height="58" rx="6" fill="#18794e"/>

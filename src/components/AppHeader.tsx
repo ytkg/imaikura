@@ -17,12 +17,12 @@ export function AppHeader({
 }: AppHeaderProps) {
   return (
     <header className="app-header">
-      <a className="brand" href="./" aria-label="いまいくら ホーム">
+      <a className="brand" href="./" aria-label="いまいくら？ ホーム">
         <span className="brand-mark">
           <BookOpen size={21} />
           <i aria-hidden="true" />
         </span>
-        <span>いまいくら</span>
+        <span>いまいくら？</span>
       </a>
 
       <div className="menu-wrap">

@@ -12,7 +12,7 @@ export function About({ onClose }: { onClose: () => void }) {
         <header className="modal-header">
           <div>
             <span className="eyebrow">このアプリについて</span>
-            <h2 id="about-title">いまいくら</h2>
+            <h2 id="about-title">いまいくら？</h2>
           </div>
           <button
             className="icon-button"
